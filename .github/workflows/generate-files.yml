@@ -10,6 +10,8 @@ name: Build
 on:
   push:
     branches: [ main, next-minor ]
+  pull_request:
+    branches: [ main, next-minor ]
 
 permissions:
   contents: read
@@ -39,11 +41,11 @@ jobs:
     - name: Generate extracted files
       working-directory: ${{github.workspace}}/build
       run: |
-        SPECDIR = ../specification/
-        MD_FILES = $(sort $(wildcard $(SPECDIR)gedcom*.md))
-        EXTDIR = ../extracted-files/
+        SPECDIR=../specification/
+        MD_FILES=$(sort $(wildcard $(SPECDIR)gedcom*.md))
+        EXTDIR=../extracted-files/
         python3 extract-grammars.py $(MD_FILES) $(EXTDIR)
-        TAGDEFS = $(EXTDIR)tags
+        TAGDEFS=$(EXTDIR)tags
         python3 uri-def.py $(MD_FILES) $(TAGDEFS)
 
     - name: Create Pull Request
