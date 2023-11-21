@@ -40,13 +40,14 @@ jobs:
 
     - name: Generate extracted files
       working-directory: ${{github.workspace}}/build
+      env:
+        SPECDIR: ../specification/
+        EXTDIR: ../extracted-files/
+        TAGDEFS: ${{ env.EXTDIR }}tags
       run: |
-        SPECDIR=../specification/
-        MD_FILES=$(sort $(wildcard $(SPECDIR)gedcom*.md))
-        EXTDIR=../extracted-files/
-        python3 extract-grammars.py $(MD_FILES) $(EXTDIR)
-        TAGDEFS=$(EXTDIR)tags
-        python3 uri-def.py $(MD_FILES) $(TAGDEFS)
+        export MD_FILES=$(sort $(wildcard ${{ env.SPECDIR }}gedcom*.md))
+        python3 extract-grammars.py $(MD_FILES) ${{ env.EXTDIR }}
+        python3 uri-def.py $(MD_FILES) ${{ env.TAGDEFS }}
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
