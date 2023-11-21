@@ -36,6 +36,9 @@ jobs:
       id: extract_branch
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
+    - name: Install Pandoc
+      run: sudo apt-get install -y pandoc
+
     - name: Generate files
       working-directory: ${{github.workspace}}/build
       run: |
