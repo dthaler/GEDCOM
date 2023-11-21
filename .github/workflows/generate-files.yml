@@ -22,6 +22,9 @@ jobs:
       contents: write  # for Git to git push
       pull-requests: write  # for Git to create a pull request
     runs-on: ubuntu-latest
+    env:
+      SPECDIR: ../specification/
+      EXTDIR: ../extracted-files/
 
     steps:
     - uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
@@ -38,16 +41,32 @@ jobs:
       id: extract_branch
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-    - name: Generate extracted files
+    - name: Extract grammars
+      working-directory: ${{github.workspace}}/build
+      shell: sh
+      run: |
+        export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
+        python3 extract-grammars.py ${MD_FILES} ${{ env.EXTDIR }}
+
+    - name: Build docker image
+      run: docker build -f .github/workflows/Dockerfile -t my-pandoc-image .
+
+    - name: Run Python script in Docker
+      run: |
+        export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
+        echo "MD_FILES: ${MD_FILES}"
+        docker run --rm -v ${{ github.workspace }}:/data my-pandoc-image python3 /data/uri-def.py ${MD_FILES} ${{ env.TAGDEFS }}
+
+    - name: Extract files
       working-directory: ${{github.workspace}}/build
       env:
-        SPECDIR: ../specification/
-        EXTDIR: ../extracted-files/
-        TAGDEFS: ${{ env.EXTDIR }}tags
+        TAGDEFS: ../extracted-files/tags
+      shell: sh
       run: |
-        export MD_FILES=$(sort $(wildcard ${{ env.SPECDIR }}gedcom*.md))
-        python3 extract-grammars.py $(MD_FILES) ${{ env.EXTDIR }}
-        python3 uri-def.py $(MD_FILES) ${{ env.TAGDEFS }}
+        echo "MD_FILES: ${MD_FILES}"
+        export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
+        echo "MD_FILES: ${MD_FILES}"
+        python3 uri-def.py ${MD_FILES} ${{ env.TAGDEFS }}
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
