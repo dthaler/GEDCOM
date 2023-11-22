@@ -47,6 +47,7 @@ jobs:
       run: |
         export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
         python3 extract-grammars.py ${MD_FILES} ${{ env.EXTDIR }}
+        ls -l ${{ env.EXTDIR }}
 
     - name: Generate GEDOM-tmp.md
       working-directory: ${{github.workspace}}/build
@@ -54,6 +55,29 @@ jobs:
       run: |
         export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
         python3 hyperlink.py ${MD_FILES} GEDCOM-tmp.md
+        ls -l GEDCOM-tmp.md
+
+    - name: Generate GEDCOM-tmp.html
+      working-directory: ${{github.workspace}}/build
+      run: |
+        docker run --rm --volume "`pwd`:/data" pandoc/latex:2.9 GEDCOM-tmp.md -o GEDCOM-tmp.html
+        ls -l GEDCOM-tmp.html
+
+    - name: Generate gedcom.html
+      working-directory: ${{github.workspace}}/build
+      run: |
+        python3 hyperlink-code.py GEDCOM-tmp.html ../specification/gedcom.html
+        ls -l ../specification/gedcom.html
+
+    - name: Install weasyprint
+      run: |
+        python3 -mpip install --user weasyprint==52.5
+
+    - name: Generate gedcom.pdf
+      working-directory: ${{github.workspace}}/build
+      run: |
+        python3 -mweasyprint ../specification/gedcom.html ../specification/gedcom.pdf
+        ls -l ../specification/gedcom.pdf
 
     - name: Install Pandoc
       run: sudo apt-get install pandoc 
