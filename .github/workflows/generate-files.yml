@@ -32,6 +32,10 @@ jobs:
         disable-sudo: true
         egress-policy: audit
 
+    - name: Install Pandoc
+      run: |
+        apt-get install -y pandoc 
+
     - name: Checkout code
       uses: actions/checkout@v4
       with:
@@ -80,16 +84,18 @@ jobs:
         ls -l ../specification/gedcom.pdf
 
     - name: Install Pandoc
-      run: sudo apt-get install pandoc 
-
-    - name: Build docker image
-      run: docker build -f .github/workflows/Dockerfile -t my-pandoc-image .
-
-    - name: Run Python script in Docker
       run: |
-        export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
-        echo "MD_FILES: ${MD_FILES}"
-        docker run --rm -v ${{ github.workspace }}:/data my-pandoc-image python3 /data/uri-def.py ${MD_FILES} ${{ env.TAGDEFS }}
+        apt-get update
+        apt-get install -y pandoc 
+
+#    - name: Build docker image
+#      run: docker build -f .github/workflows/Dockerfile -t my-pandoc-image .
+#
+#    - name: Run Python script in Docker
+#      run: |
+#        export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
+#        echo "MD_FILES: ${MD_FILES}"
+#        docker run --rm -v ${{ github.workspace }}:/data my-pandoc-image python3 /data/uri-def.py ${MD_FILES} ${{ env.TAGDEFS }}
 
     - name: Extract files
       working-directory: ${{github.workspace}}/build
