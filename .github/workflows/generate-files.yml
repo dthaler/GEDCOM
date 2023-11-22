@@ -20,6 +20,9 @@ jobs:
       contents: write  # for Git to git push
       pull-requests: write  # for Git to create a pull request
     runs-on: ubuntu-latest
+    env:
+      SPECDIR: ../specification/
+      EXTDIR: ../extracted-files/
 
     steps:
     - uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
@@ -27,29 +30,27 @@ jobs:
         disable-sudo: true
         egress-policy: audit
 
-    - name: Checkout code
+    - name: Checkout GEDCOM
       uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
 
     - name: Get the branch name
       id: extract_branch
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-    - name: Generate extracted files
+    - name: Generate grammar.abnf and grammar.gedstruct
       working-directory: ${{github.workspace}}/build
+      shell: sh
       run: |
-        SPECDIR = ../specification/
-        MD_FILES = $(sort $(wildcard $(SPECDIR)gedcom*.md))
-        EXTDIR = ../extracted-files/
-        python3 extract-grammars.py $(MD_FILES) $(EXTDIR)
-        TAGDEFS = $(EXTDIR)tags
-        python3 uri-def.py $(MD_FILES) $(TAGDEFS)
+        echo "Branch: ${{ steps.extract_branch.outputs.branch }}"
+        export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
+        python3 extract-grammars.py ${MD_FILES} ${{ env.EXTDIR }}
+        ls -l ${{ env.EXTDIR }}
 
-    - name: Create Pull Request
+    - name: Create GEDCOM Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
-        add-paths: extracted_files
+        path: GEDCOM
+        add-paths: extracted-files
         commit-message: Update extracted files
         delete-branch: true
         title: 'Merge extracted-files into ${{ steps.extract_branch.outputs.branch }}'
