@@ -41,12 +41,22 @@ jobs:
       id: extract_branch
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-    - name: Extract grammars
+    - name: Generate grammar.abnf and grammar.gedstruct
       working-directory: ${{github.workspace}}/build
       shell: sh
       run: |
         export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
         python3 extract-grammars.py ${MD_FILES} ${{ env.EXTDIR }}
+
+    - name: Generate GEDOM-tmp.md
+      working-directory: ${{github.workspace}}/build
+      shell: sh
+      run: |
+        export MD_FILES=$(ls ${{ env.SPECDIR }}gedcom*.md | sort)
+        python3 hyperlink.py ${MD_FILES} GEDCOM-tmp.md
+
+    - name: Install Pandoc
+      run: sudo apt-get install pandoc 
 
     - name: Build docker image
       run: docker build -f .github/workflows/Dockerfile -t my-pandoc-image .
