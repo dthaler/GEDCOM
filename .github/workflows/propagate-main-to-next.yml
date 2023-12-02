@@ -27,11 +27,6 @@ jobs:
       with:
         ref: next-minor
 
-    - name: Merge changes from main
-      run: |
-        git fetch
-        git merge origin/main
-
     - name: Set git config
       env:
         GH_TOKEN: ${{ github.token }}
@@ -39,6 +34,12 @@ jobs:
         git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
         git config --global user.name "$(gh api /users/${GITHUB_ACTOR} | jq .name -r)"
         git config -l
+
+    - name: Merge changes from main
+      run: |
+        git fetch
+        git merge --stat --allow-unrelated-histories -s ours origin/main
+        git log -2
 
     - name: Check for diffs
       id: diff
