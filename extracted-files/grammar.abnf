@@ -133,7 +133,7 @@ nameStr      = 1*nameChar
 
 ; ------------- Media Type -------------
 
-MediaType = type "/" subtype parameters
+MediaType = type "/" subtype ";" parameters
 
 
 ; ------------- Special -------------
