@@ -301,7 +301,7 @@ The official grammar for media type is given in RFC 2045, section 5.1, which def
 registered values and extension values.
 
 ```abnf
-MediaType = type "/" subtype parameters
+MediaType = type "/" subtype ";" parameters
 ```
 where:
 * `type` and `subtype` are defined in [RFC 2045](https://www.rfc-editor.org/info/rfc2045)
