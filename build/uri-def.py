@@ -35,7 +35,6 @@ def find_data_types(txt, g7):
         for dt, uri in re.findall(r'URI[^\n]*`([^\n`]*)` data type[^\n]*`([^`\n:]*:[^\n`]*)`', section.group(0)):
             dturi[dt] = uri
             if uri.startswith('g7:'):
-                if '#' in uri: uri = uri[:uri.find('#')]
                 if uri[3:] not in g7:
                     g7[uri[3:]] = ('data type', [section.group(2).strip()])
     return dturi
@@ -251,7 +250,9 @@ def find_descriptions(txt, g7, ssp):
         if header.startswith('Fam'): pfx = 'FAM-'
         if header.startswith('Indi'): pfx = 'INDI-'
         for tag, name, desc in re.findall(r'`([A-Z_0-9]+)` *\| *([^|\n]*?) *\| *([^|\n]*[^ |\n]) *', table.group(2)):
-            if '<br' in name: name = name[:name.find('<br')]
+            if '<br' in name:
+                tag = name[name.find('`g7:')+4:name.rfind('`')]
+                name = name[:name.find('<br')]
             if tag not in g7: tag = pfx+tag
             if tag not in g7:
                 raise Exception('Found table for '+tag+' but no section or structure')
@@ -270,6 +271,7 @@ def find_enum_by_link(txt, enums, tagsets):
             # 'g7:INDI-FACT',
             # 'g7:FAM-FACT',
         # ))         ## do not do for enumset-EVEN 
+    enum_prefix = {k[k.find('enum-')+5:] for e in enums.values() for k in e }
     for sect in re.finditer(r'# *`(g7:enumset-[^`]*)`[\s\S]*?\n#', txt):
         if '[Events]' in sect.group(0):
             key = sect.group(1).replace('`','').replace('.','-')
@@ -277,7 +279,8 @@ def find_enum_by_link(txt, enums, tagsets):
                 if 'Event' in k:
                     enums.setdefault(key, [])
                     for tag in tagsets[k]:
-                        tag = tag.replace('INDI-','enum-').replace('FAM-','enum-')
+                        if tag.startswith('INDI-') and tag[5:] in enum_prefix: tag = 'enum-'+tag[5:]
+                        if tag.startswith('FAM-') and tag[4:] in enum_prefix: tag = 'enum-'+tag[4:]
                         tag = 'g7:'+tag
                         if tag in enums[key]: continue
                         enums[key].append(tag)
@@ -287,7 +290,8 @@ def find_enum_by_link(txt, enums, tagsets):
                 if 'Attribute' in k:
                     enums.setdefault(key, [])
                     for tag in tagsets[k]:
-                        tag = tag.replace('INDI-','enum-').replace('FAM-','enum-')
+                        if tag.startswith('INDI-') and tag[5:] in enum_prefix: tag = 'enum-'+tag[5:]
+                        if tag.startswith('FAM-') and tag[4:] in enum_prefix: tag = 'enum-'+tag[4:]
                         tag = 'g7:'+tag
                         if tag in enums[key]: continue
                         enums[key].append(tag)
@@ -371,6 +375,7 @@ if __name__ == '__main__':
         g7[k[3:]] =  ('enumeration set',[]) 
     enumsets = find_enumsets(txt)
     find_calendars(txt, g7)
+    dtypes_inv = {expand_prefix(v,prefixes):k for k,v in dtypes.items()}
 
     struct_lookup = []
     enum_lookup = []
@@ -385,18 +390,22 @@ if __name__ == '__main__':
             copyfile(maybe, join(dest,tag))
             print('by copying', maybe, '...', end=' ')
             continue
-        with open(join(dest,tag), 'w') as fh:
+        with open(join(dest,tag.replace('#','-')), 'w') as fh:
             fh.write('%YAML 1.2\n---\n')
             print('lang: en-US', file=fh)
             print('\ntype:',g7[tag][0], file=fh)
             
-            # error: type-DATE# type-List#
             uri = expand_prefix('g7:'+tag,prefixes)
             print('\nuri:', uri, file=fh)
             
             if g7[tag][0] in ('structure', 'enumeration', 'calendar', 'month'):
                 ptag = re.sub(r'.*-', '', re.sub(r'-[A-Z]?[a-z].*', '', tag))
-                print('\nstandard tag: '+(repr(ptag) if ptag in ('YES','NO','TRUE','FALSE', '0', '1', '2', '3') else ptag), file=fh)
+                print('\nstandard tag: '+repr(ptag), file=fh)
+            
+            if g7[tag][0] == 'data type':
+                production = dtypes_inv[uri].replace(':','-')
+                if any('```abnf' in spec and re.search('^'+production+' *= ', spec, re.M) for spec in g7[tag][1]):
+                    print('\nabnf production:',production, file=fh)
             
             if len(g7[tag][1]) > 0:
                 print('\nspecification:', file=fh)
@@ -469,6 +478,7 @@ if __name__ == '__main__':
                         is_used_by = True
                     print('  - "'+expand_prefix(tag2,prefixes)+'"', file=fh)
 
+            print('\ncontact: "https://gedcom.io/community/"', file=fh)
             fh.write('...\n')
 
         print('done')

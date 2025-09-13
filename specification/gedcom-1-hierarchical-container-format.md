@@ -434,7 +434,7 @@ It should appear within the document before any extension tags.
 The schema's substructures are tag definitions.
 
 A tag definition is a structure with tag `TAG`.
-Its payload is an extension tag, a space, and a URI
+Its payload is an [Tag Definition], which includes both an extension tag and a URI,
 and defines that extension tag to be an abbreviation for that URI within the current document.
 
 :::example
@@ -457,7 +457,7 @@ defines the following tags
 Note that at the time of writing, the [FOAF](https://xmlns.com/foaf/spec/20140114.html) URIs used in this example are not URLs.
 :::
 
-The meaning of a documented extension tag is identified by its superstructure type and its URI, not its tag.
+The meaning of a documented extension tag is identified by its URI, not its tag.
 As such each documented extension tag needs its own URI: it is its URI, not its tag, that defines its meaning.
 Documented extension tags can be changed freely by modifying the schema,
 though it is recommended that documented extension tags not be changed.

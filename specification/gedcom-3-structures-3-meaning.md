@@ -226,7 +226,7 @@ See `ADDRESS_STRUCTURE` for more details.
 
 #### `AGE` (Age at event) `g7:AGE`
 
-The age of the individual at the time an event occurred, or the age listed in the document.
+The age of the individual at the time an event occurred. It is recommended that this be an age from a cited source document.
 
 #### `AGNC` (Responsible agency) `g7:AGNC`
 
@@ -238,10 +238,19 @@ Examples are an employer of a person of an associated occupation, or a church th
 A single individual may have facts distributed across multiple individual records, connected by `ALIA` pointers
 (named after "alias" in the computing sense, not the pseudonym sense).
 
+An `ALIA` pointer should not point to the superstructure of the `ALIA`.
+
 :::note
 This specification does not define how to connect `INDI` records with `ALIA`.
 Some systems organize `ALIA` pointers to create a tree structure, with the root `INDI` record containing the composite view of all facts in the leaf `INDI` records.
 Others distribute events and attributes between `INDI` records mutually linked by symmetric pairs of `ALIA` pointers.
+
+`ALIA` is known to be used for different purposes by different users.
+Some users use `ALIA` for uncertain connections, tentatively linking records prior to confirming identities and merging them into a single record;
+other users create one `INDI` for each single-source view of an individual, linked together with `ALIA` and never merged into a single record;
+other uses of `ALIA` may also exist.
+Applications should avoid assuming a particular usage was intended without user confirmation.
+
 A future version of this specification may adjust the definition of `ALIA`.
 :::
 
@@ -428,14 +437,21 @@ See `g7:DATA`.
 
 #### `DATA` (Data) `g7:HEAD-SOUR-DATA`
 
-The electronic data source or digital repository from which this dataset was exported.
-The payload is the name of that source,
-with substructures providing additional details about the source (not the export).
+The database, electronic data source, or digital repository from which this dataset was exported.
+The payload is the name of the database, electronic data source, or digital repository,
+with substructures providing additional details about it (not about the export).
 
 #### `DATE` (Date) `g7:DATE`
 
 The principal date of the subject of the superstructure.
 The payload is a `DateValue`.
+
+When the superstructure is an event, the principal date indicates when the event took place.
+
+When the superstructure is an attribute, the principal date indicates when the attribute was observed, asserted, or applied.
+A date period might put bounds on the attributes applicability, but other date forms assume that the attribute may have also applied on other dates too.
+
+When the superstructure is a `g7:SOUR-DATA`, the principal date indicates when the data was entered into the source; or, for a source like a website that changes over time, a date on which the source contained the data.
 
 See `DATE_VALUE` for more details.
 
@@ -702,8 +718,23 @@ The correct tag for the height of an individual is the `DSCR` attribute.
 
 #### `HUSB` (Husband) `g7:HUSB`
 
-A container for information relevant to the subject of the superstructure
-specific to the individual described by the associated `FAM`'s `HUSB` substructure.
+A structure for storing information related to one partner in the context of a `FAMILY_EVENT`;
+in particular,
+the partner referenced in the `g7:FAM-HUSB` substructure
+of the `g7:record-FAM` superstructure of the `FAMILY_EVENT`.
+
+:::example
+The following indicates that individual `@I1@` was 32 years old at the time of the marriage, without indicating an age for individual `@I2@`.
+
+```gedcom
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 HUSB
+3 AGE 32y
+```
+:::
 
 #### `HUSB` (Husband) `g7:FAM-HUSB`
 
@@ -803,12 +834,6 @@ The payload of the `LANG` structure is a language tag, as defined by [BCP 47](ht
 #### `LATI` (Latitude) `g7:LATI`
 
 A latitudinal coordinate.
-The payload is either `N` (for a coordinate north of the equator) or `S` (for a coordinate south of the equator) followed by a decimal number of degrees.
-Minutes and seconds are not used and should be converted to fractional degrees prior to encoding.
-
-:::example
-18 degrees, 9 minutes, and 3.4 seconds North would be formatted as `N18.150944`.
-:::
 
 #### `LEFT` (Left crop width) `g7:LEFT`
 
@@ -818,12 +843,6 @@ See `CROP` for more details.
 #### `LONG` (Longitude) `g7:LONG`
 
 A longitudinal coordinate.
-The payload is either `E` (for a coordinate east of the prime meridian) or `W` (for a coordinate west of the prime meridian) followed by a decimal number of degrees.
-Minutes and seconds are not used and should be converted to fractional degrees prior to encoding.
-
-:::example
-168 degrees, 9 minutes, and 3.4 seconds East would be formatted as `E168.150944`.
-:::
 
 #### `MAP` (Map) `g7:MAP`
 
@@ -883,7 +902,7 @@ for this asset, the `FORM`.`MEDI` is recommended to be `PHOTO` rather than `ELEC
 
 Indicates the [media type](#media-type) of the payload of the superstructure.
 
-As of version 7.0, only 2 media types are supported by this structure:
+As of version 7.0, there are two standard media types for this structure:
 
 - `text/plain` shall be presented to the user as-is, preserving all spacing, line breaks, and so forth.
 
@@ -898,7 +917,7 @@ As of version 7.0, only 2 media types are supported by this structure:
         Other entities should be represented as their respective Unicode characters instead.
     
     Supporting more of HTML is encouraged.
-    Unsupported elements should be ignored during display.
+    Unsupported tags should be ignored during display.
 
 :::note
 Applications are welcome to support more XML entities or HTML character references in their user interface.
@@ -921,7 +940,12 @@ If needed, `text/html` can be converted to `text/plain` using the following step
 2. Case-insensitively replace each `<p`...`>`, `</p`...`>`, and `<br`...`>` with a line break
 3. Remove all other `<`...`>` tags
 4. Replace each `&lt;` with `<` and `&gt;` with `>`
-4. Replace each `&amp;` with `&`
+5. Replace each `&amp;` with `&`
+
+Other `text` media types not discussed above are also permitted, though not recommended.
+If present, they are considered extensions.  Such extensions do not require an
+[extension tag](#extensions) because the definition of `g7:MIME` is sufficient
+to cover this kind of extension.
 
 #### `NAME` (Name) `g7:NAME`
 
@@ -953,7 +977,15 @@ See also `INDIVIDUAL_ATTRIBUTE_STRUCTURE`.
 
 #### `NICK` (Nickname) `g7:NICK`
 
-A descriptive or familiar name that is used instead of, or in addition to, one’s proper name.
+A descriptive or familiar name that is used instead of, or in addition to, one’s official or legal name.
+
+:::note
+The label "nickname" and description text of this structure were introduced with version 5.5 in 1996, but are understood differently by different users.
+Some use `NICK` only for names that would be inappropriate in formal settings.
+Some use it for pseudonyms regardless of where they are used.
+Some use it for any variant of a name that is not the one used on legal documents.
+Because all of these uses, and likely others as well, are common in existing data, no further clarification of the meaning of the `NICK` structure is possible without contradicting some existing data.
+:::
 
 #### `NMR` (Number of marriages) `g7:NMR`
 
@@ -1101,11 +1133,23 @@ A name given to a foundling orphan might be
 ````
 :::
 
+:::example
+A record specifying a writer's "pen name" (a type of professional name) might become
+
+````gedcom
+1 NAME Mark /Twain/
+2 TYPE PROFESSIONAL
+3 PHRASE Pen
+````
+:::
+
 
 #### `PLAC` (Place) `g7:PLAC`
 
 The principal place in which the superstructure's subject occurred,
-represented as a [List] of jurisdictional entities in a sequence from the lowest to the highest jurisdiction.
+represented as a [List] of jurisdictional entities in a sequence from the lowest to the highest jurisdiction,
+where "jurisdiction" includes units in a political, ecclesiastical, and geographical hierarchies
+and may include units of any size, such as a continent, "at sea", or a specific building, farm, or cemetery.
 As with other lists, the jurisdictions are separated by commas.
 Any jurisdiction's name that is missing is still accounted for by an empty string in the list.
 
@@ -1568,25 +1612,18 @@ If the authority maintains stable URLs for each identifier it issues,
 it is recommended that the `TYPE` payload be selected such that appending the `EXID` payload to it yields that URL.
 However, this is not required and a different URI for the set of issued identifiers may be used instead.
 
-Registered URIs are listed in [exid-types.json](https://github.com/FamilySearch/GEDCOM/blob/main/exid-types.json), where fields include:
-
-* "label": a short string suitable for display in a user interface.
-* "type": The URI representing the authority issuing the `EXID`.
-* "description": A description of the meaning of the `EXID`.
-* "contact": A contact email address for the person or organization registering the URI.
-* "change-controller": The name or contact information for the person or organization authorized to update the registration.
-* "fragment": If present, indicates a short string that can be used as a label for a fragment identifier appended to the URI.  If absent, indicates that fragment identifiers are not used with the URI.
-* "reference": A URL with more information about the meaning of the `EXID`. Such information should explain the uniqueness and expected durability of the identifier.
+Registered URIs are listed in the [exid-types registry](https://github.com/FamilySearch/GEDCOM-registries/tree/main/uri/exid-types), where fields are defined using the [YAML file format](https://gedcom.io/terms/format).
 
 Additional type URIs can be registered by filing a
-[GitHub pull request](https://github.com/FamilySearch/GEDCOM/pulls).
+[GitHub pull request](https://github.com/FamilySearch/GEDCOM-registries/pulls).
 
 #### `UID` (Unique Identifier) `g7:UID`
 
 A globally-unique identifier of the superstructure,
 to be preserved across edits.
 If a globally-unique identifier for the record already exists, it should be used without modification, not even whitespace or letter case normalization.
-New globally unique identifiers should be created and formatted as described in [RFC 4122](https://www.rfc-editor.org/info/rfc4122).
+It is recommended that new globally unique identifiers be created and formatted using the UUID
+production specified in [RFC 9562](https://www.rfc-editor.org/info/rfc9562) Section 4.
 
 This is metadata about the structure itself, not data about its subject.
 Multiple structures describing different aspects of the same subject would have different `UID` values.
@@ -1627,8 +1664,23 @@ See `CROP` for more details.
 
 #### `WIFE` (Wife) `g7:WIFE`
 
-A container for information relevant to the subject of the superstructure
-specific to the individual described by the associated `FAM`'s `WIFE` substructure.
+A structure for storing information related to one partner in the context of a `FAMILY_EVENT`;
+in particular,
+the partner referenced in the `g7:FAM-WIFE` substructure
+of the `g7:record-FAM` superstructure of the `FAMILY_EVENT`.
+
+:::example
+The following indicates that individual `@I2@` was 32 years old at the time of the marriage, without indicating an age for individual `@I1@`.
+
+```gedcom
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 WIFE
+3 AGE 32y
+```
+:::
 
 #### `WIFE` (Wife) `g7:FAM-WIFE`
 
@@ -1642,12 +1694,19 @@ See also `INDIVIDUAL_EVENT_STRUCTURE`.
 
 #### `WWW` (Web address) `g7:WWW`
 
-A URL or other locator for a World Wide Web page,
+A URL or other locator for a World Wide Web page of the subject of the superstructure,
 as defined by any relevant standard
 such as [whatwg/url](https://url.spec.whatwg.org/),
 [RFC 3986](https://www.rfc-editor.org/info/rfc3986),
 [RFC 3987](https://www.rfc-editor.org/info/rfc3987),
 and so forth.
+
+Like other substructures, the `WWW` structure provides details about the subject of its superstructure.
+For example, a `MARR`.`WWW` is a world wide web page of the marriage event,
+not the personal website of the couple or an entry in an online database serving as a source documenting the marriage.
+However, the meaning of `WWW` was only implicit when it was introduced in version 5.5.1
+and many files were created that use `WWW` to store a more tangentially-related web address,
+so applications are recommended to interpret the `WWW` structure's meaning cautiously.
 
 If an invalid or no longer existing web address is present upon import, it should be preserved as-is on export.
 

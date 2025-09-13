@@ -1,3 +1,41 @@
+# Version 7.0.16
+
+- Recommend that `ASSO` not be used to replicate other standard structures.
+
+- Recommend that sources and notes about the starting of parent-child relationships be put under a `BIRT`, `ADOP`, or `CHR`.
+
+- Clarify that `HEAD`.`SOUR`.`DATA` may be used for data sources that are not technically databases.
+
+- Clarify that unsupported HTML tags should be ignored, not entire elements.
+
+- Note that some applications have historically ignored `PLAC`.`FORM` structures.
+
+- Remove the ambiguous "month code" term from the spec, using the defined `stdTag` term instead.
+
+- Change how `EXID`.`TYPE` values are registered from a single JSON file in the GEDCOM repository to a separate YAML file for each value in the GEDCOM-registries repository.
+
+- Update scripts that extract YAML from the spec to be more consistent in where quotes are used and to extract more information from tables into YAML files.
+
+
+# Version 7.0.15
+
+- Clarified that `FORM`.`MEDI` describe the original medium, not the derived medium, when used with derived files.
+
+- Clarified the meaning of the `WWW` structure, which previously only mentioned its payload datatype.
+
+- Clarified `PLAC` to both define "jurisdiction" and document its meaning in the absence of a `PLAC`.`FORM`.
+
+- Clarified what the term "principal date" means in different contexts in the definition of `g7:DATE`.
+
+- Updated `NICK` to no longer suggest that some names are "improper" and to document the diversity of views in what a "nickname" is.
+
+- Removed confusing reference to superstructures in the meaning of a documented extension tag.
+
+- Added ABNF for more datatypes and updated DIGIT's capitalization for compatibility with more ABNF toolchains.
+
+- Various typo corrections.
+
+
 # Version 7.0.14
 
 - Recommend that `NO XYZ` only be used where `XYZ` is permitted (its meaning is undefined elsewhere).
@@ -8,7 +46,7 @@
 
 - Refactor the enumeration tags `CENS`, `EVEN`, `FACT`, `NCHI`, and `RESI` to have different URIs, removing a previous parsing ambiguity. This changes neither the set of tags permitted in any enumeration set nor those tags' meaning, only how they are specified to better support automated tooling.
 
-- Deprecate extension-defined substructures using `stdTag` in a way incompatible with any standard definition of that tag. The now-deprecated use was common in 5.5.1 and is permitted in 7.0, but can prevent extension structures from being adopted as-is as new standard structures in future versions of the specification.
+- Deprecate the ability to use extension-defined substructures `stdTag` in a way incompatible with any standard definition of that tag. The now-deprecated use was common in 5.5.1 and is permitted in 7.0, but can prevent extension structures from being adopted as-is as new standard structures in future versions of the specification.
 
 - Clarify that the "applies to" and "status" columns of `g7:enumset-ord-STAT` are recommendations, not restrictions.
 
