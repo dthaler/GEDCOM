@@ -70,7 +70,7 @@ The intent of this metasyntax is to resemble the line encoding of allowable stru
         
         - `@<XREF:`tag`>@` means a pointer to a structure with this cross-reference template; `@VOID@` is also permitted.
         - `<`data type`>` means a non-pointer payload, as described in [Data types](#datatypes). If the data type allows the empty string, the payload may be omitted.
-        - `[`text`|<NULL>]` means the payload is optional but if present must be the given text.
+       - `[`text`|<NULL>]` means the payload is optional but if present must be the given text. The `[`text`|<NULL>]` payload descriptor is only used in this version of the specification for `[Y|<NULL>]` in event structures, as explained in [Events](#events).
         
         If there is a payload descriptor, a payload that matches the payload is required of the described structure unless the descriptor says the payload is optional.
 
@@ -133,7 +133,7 @@ n HEAD                                     {1:1}  g7:HEAD
   +1 GEDC                                  {1:1}  g7:GEDC
      +2 VERS <Special>                     {1:1}  g7:GEDC-VERS
   +1 SCHMA                                 {0:1}  g7:SCHMA
-     +2 TAG <Special>                      {0:M}  g7:TAG
+     +2 TAG <TagDef>                       {0:M}  g7:TAG
   +1 SOUR <Special>                        {0:1}  g7:HEAD-SOUR
      +2 VERS <Special>                     {0:1}  g7:VERS
      +2 NAME <Text>                        {0:1}  g7:NAME
@@ -166,9 +166,12 @@ A few substructures of note:
 - `SCHMA` gives the meaning of extension tags; see [Extensions](#extensions) for more details.
 - `SOUR` describes the originating software.
     - `CORP` describes the corporation creating the software.
-    - `HEAD`.`SOUR`.`DATA` describes a larger database this data is extracted from.
+    - `HEAD`.`SOUR`.`DATA` describes a larger database, electronic data source, or digital repository this data is extracted from.
 - `LANG` and `PLAC` give a default value for the rest of the document.
 
+:::deprecation
+`HEAD`.`SOUR`.`DATA` is now deprecated and applications should use `HEAD`.`SOUR`.`NAME` instead.
+:::
 
 ### Records
 
@@ -210,6 +213,7 @@ for example, by consistently displaying the `HUSB` on the same side of the `WIFE
 Family structures with more than 2 partners
 may either use several `FAM` records
 or use `ASSOCIATION_STRUCTURE`s to indicate additional partners.
+`ASSO` should not be used for relationships that can be expressed using `HUSB`, `WIFE`, or `CHIL` instead.
 
 :::note
 The `FAM` record will be revised in a future version to more fully express the diversity of human family relationships.
@@ -227,8 +231,13 @@ the `INDI` record must use a `FAMC` to point to the `FAM` record.
 An `INDI` record should not have multiple `FAMS` substructures pointing to the same `FAM`.
 
 A `FAM` record should not have multiple `CHIL` substructures pointing to the same `INDI`; doing so implies a nonsensical birth order.
-An `INDI` record may have multiple `FAMC` substructures pointing to the same `FAM`, but doing so is not recommended.
+An `INDI` record may have multiple `FAMC` substructures pointing to the same `FAM`, for example to indicate a child that was both fostered and adopted by the same family.
 
+Source citations and notes related to the start of a specific child relationship should be placed
+under the child's `BIRT`, `CHR`, or `ADOP` event, rather than under the `FAM` record.
+
+If an `INDI` that can be reached from a `FAM` by following `CHIL` and `FAMS` pointers can also be reachable by following `HUSB`, `WIFE`, and `FAMC` pointers, then that implies that a person is their own ancestor/descendant.
+In most cases that would be an error, though it is theoretically possible that such a situation could occur with non-biological relationships (marriages, adoptions, etc.).
 
 #### `INDIVIDUAL_RECORD` :=
 
@@ -272,10 +281,14 @@ See `ALIA` for more details.
 
 Individual records are linked to Family records by use of bi-directional pointers.
 Details about those links are stored as substructures of the pointers in the individual record.
+Source citations and notes related to the start of the individual's relationship to parents should be placed
+under the individual's `BIRT`, `CHR`, or `ADOP` event, rather than directly under the `INDI` record,
+since the former permits explicitly identifying the family record whereas the latter does not.
 
 Other associations or relationships are represented by the `ASSO` (association) tag.
 The person's relation or associate is the person being pointed to.
 The association or relationship is stated by the value on the subordinate `ROLE` line.
+`ASSO` should not be used for relationships that can be expressed using `FAMS` or `FAMC` instead.
 
 :::example
 The following example refers to 2 individuals, `@I1@` and `@I2@`,
@@ -296,6 +309,8 @@ the eulogist at a funeral can be shown by an `ASSO` pointer subordinate to the b
 and so on. A subordinate `FAMC` pointer is allowed to refer to a family where the individual
 does not appear as a child.
 
+If a `FAM` that can be reached from a `INDI` by following `FAMS` and `CHIL` pointers can also be reachable by following `FAMC`, `HUSB`, and `WIFE` pointers, then that implies that a person is their own ancestor/descendant.
+In most cases that would be an error, though it is theoretically possible that such a situation could occur with non-biological relationships (marriages, adoptions, etc.).
 
 
 #### `MULTIMEDIA_RECORD` :=
@@ -324,6 +339,7 @@ The file reference can occur more than once to group multiple files together. Gr
 The change and creation dates should be for the `OBJE` record itself,
 not the underlying files.
 
+A `MULTIMEDIA_RECORD` may contain a pointer to a `SOURCE_RECORD` and vice versa. Applications must not create datasets where these mutual pointers form a cycle. Applications should also ensure they can handle invalid files with such cycles in a safe manner.
 
 
 #### `REPOSITORY_RECORD` :=
@@ -431,6 +447,8 @@ This sourcing model is known to be insufficient for some use cases and may be re
 :::
 
 A `SOURCE_RECORD` may contain a pointer to a `SHARED_NOTE_RECORD` and vice versa. Applications must not create datasets where these mutual pointers form a cycle. Applications should also ensure they can handle invalid files with such cycles in a safe manner.
+
+A `SOURCE_RECORD` may contain a pointer to a `MULTIMEDIA_RECORD` and vice versa. Applications must not create datasets where these mutual pointers form a cycle. Applications should also ensure they can handle invalid files with such cycles in a safe manner.
 
 #### `SUBMITTER_RECORD` :=
 
@@ -708,7 +726,7 @@ n REFN <Special>                           {1:1}  g7:REFN
 n UID <Special>                            {1:1}  g7:UID
 |
 n EXID <Special>                           {1:1}  g7:EXID
-  +1 TYPE <Special>                        {0:1}  g7:EXID-TYPE
+  +1 TYPE <URI>                            {0:1}  g7:EXID-TYPE
 ]
 ```
 
@@ -790,12 +808,12 @@ n FACT <Text>                              {1:1}  g7:INDI-FACT
 ]
 ````
 
-Individual attributes; see [Individual Attributes](#individual-attributes) for descriptions of each individual attribute type..
+Individual attributes; see [Individual Attributes](#individual-attributes) for descriptions of each individual attribute type.
 
 :::note
 Individual attribute structures vary as follows:
 
-- `INDI`.`NCHI` and `NMR` have [Integer](#text) payloads; `IDNO` and `SSN` have [Special](#special) payloads; others have [Text](#text) payloads
+- `INDI`.`NCHI` and `NMR` have [Integer](#integer) payloads; `IDNO` and `SSN` have [Special](#special) payloads; others have [Text](#text) payloads
 - `INDI`.`FACT` and `IDNO` require `TYPE`; it's optional for others
 :::
 
@@ -923,7 +941,7 @@ Individual event structures vary as follows:
 
 - `INDI`.`EVEN` has a [Text](#text) payload; others may have a `Y` payload
 - `INDI`.`EVEN` requires `TYPE`; it's optional for others
-- `BIRT` and `CHR` may have a `FAMC` with no substructures; `ADOP` may have a `FAMC` with an optional `ADOP` substructure; others may not have a `FAMC` substructure
+- `BIRT` and `CHR` may have a `FAMC` with no substructures; `ADOP` may have a `FAMC` with an optional `ADOP` substructure; others may not have a `FAMC` substructure.  The `FAMC` substructure can itself have substructures for source citations and notes related to the child's relationship to parents, and is the recommended place to store such information.
 :::
 
 
@@ -993,6 +1011,9 @@ Links the superstructure to the `MULTIMEDIA_RECORD` with the given pointer.
 The optional `CROP` substructure indicates that a subregion of an image represents or applies to the superstructure.
 
 The optional `TITL` substructure supersedes any `OBJE.FILE.TITL` substructures included in the `MULTIMEDIA_RECORD`.
+
+A `MULTIMEDIA_LINK` in a `MULTIMEDIA_RECORD` should not point to the `MULTIMEDIA_RECORD` itself.  Applications should
+also ensure they can handle invalid files with such cycles in a safe manner.
 
 #### `NON_EVENT_STRUCTURE` :=
 
@@ -1116,10 +1137,10 @@ n PLAC <List:Text>                         {1:1}  g7:PLAC
   +1 TRAN <List:Text>                      {0:M}  g7:PLAC-TRAN
      +2 LANG <Language>                    {1:1}  g7:LANG
   +1 MAP                                   {0:1}  g7:MAP
-     +2 LATI <Special>                     {1:1}  g7:LATI
-     +2 LONG <Special>                     {1:1}  g7:LONG
+     +2 LATI <Latitude>                    {1:1}  g7:LATI
+     +2 LONG <Longitude>                   {1:1}  g7:LONG
   +1 EXID <Special>                        {0:M}  g7:EXID
-     +2 TYPE <Special>                     {0:1}  g7:EXID-TYPE
+     +2 TYPE <URI>                         {0:1}  g7:EXID-TYPE
   +1 <<NOTE_STRUCTURE>>                    {0:M}
 ```
 
@@ -1136,6 +1157,14 @@ A place, which can be represented in several ways:
     ordered from smallest to largest.
     The specific meaning of each element is given by the `FORM` substructure,
     or in the `HEAD`.`PLAC`.`FORM` if there is no `FORM` substructure.
+    If neither `FORM` exists, the meaning of the elements are not defined in this specification beyond being names of jurisdictions of some kind, ordered from smallest to largest.
+
+    <div class="note">
+    Some applications and users have defaulted to assuming a `FORM` of "City, County, State, Country",
+    and some applications even ignore any `FORM` substructures and treat payloads with a smaller number of
+    elements as if they had additional blank elements at the end.
+    </div>
+
     Elements should be left blank if they are unknown, do not apply to the location, or are too specific for the region in question.
 
     <div class="example">

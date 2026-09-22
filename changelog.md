@@ -1,3 +1,96 @@
+# `main` branch
+
+- Clarify that an `OBJE`.`SOUR`.`OBJE` should not point to its own containing record. #765
+
+- Note that `BEF` and `AFT` are used differently by different researchers. #775
+
+- Various copy edits. #752, #739
+
+# Version 7.0.18
+
+- Fixed typo in the ABNF for the Longitude data type introduced in 7.0.17. Because ABNF is machine-readable, this typo caused some applications using 7.0.17 to fail to parse valid data. 7.0.17 should not be used by applications utilizing the ABNF in the specification in their tooling.
+
+# Version 7.0.17
+
+- Add URI, Latitude, Longitude, and Tag definition data types.
+    
+    Previously the formats permitted for these were specified in plain text with the corresponding structure types.
+    Those definitions have been moved to the data types section to better match how other data types are defined in the specification.
+
+- Clarify the deprecation of older extensions that use non-underscore tags.
+
+    These violated the standard in both 7.0 and 5.5.1, but exist in the wild and there was unclear text "deprecating" them when they were never supported to begin with. That has been changed to be more clear about when it is an extension-defined substructure and when it violates the specification.
+
+- Clarify how file paths encode non-ASCII characters.
+
+- Clarify rules for pointer-based cycles:
+    
+    - A cycle asserting someone is their own ancestor (such as being both the `CHIL` and `FAMS` of the same person) is unlikely to be correct, but is permitted by GEDCOM.
+    
+    - A self-referential `ALIA` is (`INDI`.`AILA` pointing to the `INDI`) is meaningless and prohibited.
+    
+    - A `SOUR`-`OBJE` cycle (the source of an image is the image itself) is meaningless and prohibited.
+
+- Clarify that extension media types for notes (such as `text/markdown` that several applications are known to employ) do not require extension tags, being covered by the existing standard.
+
+- Clarify the wording of the `ELECTRONIC` enumerated value.
+
+- Clarify the wording of the `AGE` structure generally and `HUSB`.`AGE` and `WIFE`.`AGE` in particular.
+
+- Add example of `PHRASE` used with a non-`OTHER` enumeration value.
+
+- Update UUID defintion from RFC 4122 to RFC 9562
+
+- Remove redundant and confusing references to RFC 3986, which were subsumed by existing references to WHATWG URL.
+
+- Note that `FILE` payloads and GEDZIP file paths follow distinct standards, with the former using percent-escaping but the latter not.
+
+- Note that GEDZIP inherits from zip the ability to have multiple levels of compression, with some suggestions on performance implications of the chosen compression level.
+
+- Note that GEDZIP inherits from zip the ability to encrypt file contents, but not file names or sizes.
+
+- Note how `ALIA` is known to be used by existing applications and users.
+
+- Various typo corrections.
+
+# Version 7.0.16
+
+- Recommend that `ASSO` not be used to replicate other standard structures.
+
+- Recommend that sources and notes about the starting of parent-child relationships be put under a `BIRT`, `ADOP`, or `CHR`.
+
+- Clarify that `HEAD`.`SOUR`.`DATA` may be used for data sources that are not technically databases.
+
+- Clarify that unsupported HTML tags should be ignored, not entire elements.
+
+- Note that some applications have historically ignored `PLAC`.`FORM` structures.
+
+- Remove the ambiguous "month code" term from the spec, using the defined `stdTag` term instead.
+
+- Change how `EXID`.`TYPE` values are registered from a single JSON file in the GEDCOM repository to a separate YAML file for each value in the GEDCOM-registries repository.
+
+- Update scripts that extract YAML from the spec to be more consistent in where quotes are used and to extract more information from tables into YAML files.
+
+
+# Version 7.0.15
+
+- Clarified that `FORM`.`MEDI` describe the original medium, not the derived medium, when used with derived files.
+
+- Clarified the meaning of the `WWW` structure, which previously only mentioned its payload datatype.
+
+- Clarified `PLAC` to both define "jurisdiction" and document its meaning in the absence of a `PLAC`.`FORM`.
+
+- Clarified what the term "principal date" means in different contexts in the definition of `g7:DATE`.
+
+- Updated `NICK` to no longer suggest that some names are "improper" and to document the diversity of views in what a "nickname" is.
+
+- Removed confusing reference to superstructures in the meaning of a documented extension tag.
+
+- Added ABNF for more datatypes and updated DIGIT's capitalization for compatibility with more ABNF toolchains.
+
+- Various typo corrections.
+
+
 # Version 7.0.14
 
 - Recommend that `NO XYZ` only be used where `XYZ` is permitted (its meaning is undefined elsewhere).
@@ -8,7 +101,7 @@
 
 - Refactor the enumeration tags `CENS`, `EVEN`, `FACT`, `NCHI`, and `RESI` to have different URIs, removing a previous parsing ambiguity. This changes neither the set of tags permitted in any enumeration set nor those tags' meaning, only how they are specified to better support automated tooling.
 
-- Deprecate extension-defined substructures using `stdTag` in a way incompatible with any standard definition of that tag. The now-deprecated use was common in 5.5.1 and is permitted in 7.0, but can prevent extension structures from being adopted as-is as new standard structures in future versions of the specification.
+- Deprecate the ability to use extension-defined substructures `stdTag` in a way incompatible with any standard definition of that tag. The now-deprecated use was common in 5.5.1 and is permitted in 7.0, but can prevent extension structures from being adopted as-is as new standard structures in future versions of the specification.
 
 - Clarify that the "applies to" and "status" columns of `g7:enumset-ord-STAT` are recommendations, not restrictions.
 
@@ -401,6 +494,7 @@ Various ambiguities were identified in version 5.5.1: some due to poor wording, 
 
 - Name pieces are not comma separated.
 
+- The use of "after" and "before" in defining date ranges was ambiguous, with users in some regions interpreting "after 1800" to mean after the *end* of 1800 and others to mean after the *beginning* of 1800, often with each believing their interpretation is the obvious linguistic meaning and not thinking it is ambiguous. To help resolve this, 7.0 now uses "no earlier than" and "no later than" instead, which seems to be consistently interpreted by people from many regions and is inclusive of both previous meanings.
 
 ## Specification refactoring
 
